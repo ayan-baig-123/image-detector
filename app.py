@@ -37,8 +37,8 @@ SUB_CLASSES = {
 # 2. PAGE CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Hugging Face High-Precision Vision AI",
-    page_icon="⚡",
+    page_title="Prisom Vision",
+    page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -351,8 +351,8 @@ def predict_hierarchical(image):
 # ---------------------------------------------------------
 # 7. UI LAYOUT & TABS
 # ---------------------------------------------------------
-st.markdown("<h1 class='hero-title'>⚡ Hugging Face High-Precision AI</h1>", unsafe_allow_html=True)
-st.markdown("<p class='hero-subtitle'>Hierarchical Classification with Continuous Shining Button Transition</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='hero-title'>💎 PRISM VISION</h1>", unsafe_allow_html=True)
+st.markdown("<p class='hero-subtitle'>Deep Visual Intelligence & High-Precision Category Detection</p>", unsafe_allow_html=True)
 
 tab1, tab2 = st.tabs(["🎯 Classifier Workspace", "📊 Performance Heatmap"])
 
