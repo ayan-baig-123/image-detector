@@ -269,16 +269,18 @@ st.markdown(f"""
 @st.cache_resource(show_spinner=False)
 def load_clip_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    # Heavy LARGE model ki jagah Lightweight BASE model load karein
-    model_name = "openai/clip-vit-base-patch32"
-    
+    model_name = "openai/clip-vit-large-patch14"
     model = CLIPModel.from_pretrained(model_name).to(device)
     processor = CLIPProcessor.from_pretrained(model_name)
     return model, processor, device
 
-# Fast Prediction Function
+model, processor, device = load_clip_model()
+
+# ---------------------------------------------------------
+# 6. ENSEMBLED PREDICTION ENGINES
+# ---------------------------------------------------------
 def predict_hierarchical(image):
-    # Main Class Pass
+    """ Detailed multi-prompt ensembling for single inference """
     main_prompts = [f"a photo of a {cls.lower()}" for cls in DATASET_CLASSES]
     inputs_main = processor(text=main_prompts, images=image, return_tensors="pt", padding=True).to(device)
 
@@ -288,46 +290,37 @@ def predict_hierarchical(image):
 
     main_results = sorted(zip(DATASET_CLASSES, probs_main), key=lambda x: x[1], reverse=True)
     detected_main = main_results[0][0]
-    
-    # Sub-type Pass (Single Pass instead of Loop)
+    top_main_class = detected_main.upper()
+    top_main_conf = main_results[0][1]
+
+    main_names = [r[0] for r in main_results]
+    main_probs = [r[1] for r in main_results]
+
     sub_list = SUB_CLASSES.get(detected_main, [detected_main])
-    sub_prompts = [f"a photo of a {sub.lower()}" for sub in sub_list]
-    inputs_sub = processor(text=sub_prompts, images=image, return_tensors="pt", padding=True).to(device)
+    templates = [
+        "a photo of a {}",
+        "a clear photo of a {}",
+        "a close-up photo of a {}",
+        "a picture showing a {}"
+    ]
 
-    with torch.no_grad():
-        outputs_sub = model(**inputs_sub)
-        probs_sub = outputs_sub.logits_per_image.softmax(dim=1)[0].cpu().numpy() * 100
+    ensemble_probs = np.zeros(len(sub_list))
 
-    sub_results = sorted(zip(sub_list, probs_sub), key=lambda x: x[1], reverse=True)
+    for tmpl in templates:
+        sub_prompts = [tmpl.format(sub.lower()) for sub in sub_list]
+        inputs_sub = processor(text=sub_prompts, images=image, return_tensors="pt", padding=True).to(device)
 
-    return detected_main.upper(), main_results[0][1], sub_results[0][0], [r[0] for r in main_results], [r[1] for r in main_results]
+        with torch.no_grad():
+            outputs_sub = model(**inputs_sub)
+            probs_sub = outputs_sub.logits_per_image.softmax(dim=1)[0].cpu().numpy()
+            ensemble_probs += probs_sub
 
-# def predict_single_pass(image):
-#     """ Optimized lightweight single-pass engine for batch runs """
-#     main_prompts = [f"a photo of a {cls.lower()}" for cls in DATASET_CLASSES]
-#     inputs_main = processor(text=main_prompts, images=image, return_tensors="pt", padding=True).to(device)
+    final_sub_probs = (ensemble_probs / len(templates)) * 100
+    sub_results = sorted(zip(sub_list, final_sub_probs), key=lambda x: x[1], reverse=True)
+    top_sub_type = sub_results[0][0]
 
-#     with torch.no_grad():
-#         outputs_main = model(**inputs_main)
-#         probs_main = outputs_main.logits_per_image.softmax(dim=1)[0].cpu().numpy() * 100
+    return top_main_class, top_main_conf, top_sub_type, main_names, main_probs
 
-#     main_results = sorted(zip(DATASET_CLASSES, probs_main), key=lambda x: x[1], reverse=True)
-#     detected_main = main_results[0][0]
-#     top_main_class = detected_main.upper()
-#     top_main_conf = main_results[0][1]
-
-#     sub_list = SUB_CLASSES.get(detected_main, [detected_main])
-#     sub_prompts = [f"a photo of a {sub.lower()}" for sub in sub_list]
-#     inputs_sub = processor(text=sub_prompts, images=image, return_tensors="pt", padding=True).to(device)
-
-#     with torch.no_grad():
-#         outputs_sub = model(**inputs_sub)
-#         probs_sub = outputs_sub.logits_per_image.softmax(dim=1)[0].cpu().numpy() * 100
-
-#     sub_results = sorted(zip(sub_list, probs_sub), key=lambda x: x[1], reverse=True)
-#     top_sub_type = sub_results[0][0]
-
-#     return top_main_class, top_main_conf, top_sub_type
 
 # ---------------------------------------------------------
 # 7. UI LAYOUT & TABS
