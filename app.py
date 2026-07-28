@@ -269,18 +269,16 @@ st.markdown(f"""
 @st.cache_resource(show_spinner=False)
 def load_clip_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model_name = "openai/clip-vit-large-patch14"
+    # Heavy LARGE model ki jagah Lightweight BASE model load karein
+    model_name = "openai/clip-vit-base-patch32"
+    
     model = CLIPModel.from_pretrained(model_name).to(device)
     processor = CLIPProcessor.from_pretrained(model_name)
     return model, processor, device
 
-model, processor, device = load_clip_model()
-
-# ---------------------------------------------------------
-# 6. ENSEMBLED PREDICTION ENGINES
-# ---------------------------------------------------------
+# Fast Prediction Function
 def predict_hierarchical(image):
-    """ Detailed multi-prompt ensembling for single inference """
+    # Main Class Pass
     main_prompts = [f"a photo of a {cls.lower()}" for cls in DATASET_CLASSES]
     inputs_main = processor(text=main_prompts, images=image, return_tensors="pt", padding=True).to(device)
 
@@ -290,36 +288,19 @@ def predict_hierarchical(image):
 
     main_results = sorted(zip(DATASET_CLASSES, probs_main), key=lambda x: x[1], reverse=True)
     detected_main = main_results[0][0]
-    top_main_class = detected_main.upper()
-    top_main_conf = main_results[0][1]
-
-    main_names = [r[0] for r in main_results]
-    main_probs = [r[1] for r in main_results]
-
+    
+    # Sub-type Pass (Single Pass instead of Loop)
     sub_list = SUB_CLASSES.get(detected_main, [detected_main])
-    templates = [
-        "a photo of a {}",
-        "a clear photo of a {}",
-        "a close-up photo of a {}",
-        "a picture showing a {}"
-    ]
+    sub_prompts = [f"a photo of a {sub.lower()}" for sub in sub_list]
+    inputs_sub = processor(text=sub_prompts, images=image, return_tensors="pt", padding=True).to(device)
 
-    ensemble_probs = np.zeros(len(sub_list))
+    with torch.no_grad():
+        outputs_sub = model(**inputs_sub)
+        probs_sub = outputs_sub.logits_per_image.softmax(dim=1)[0].cpu().numpy() * 100
 
-    for tmpl in templates:
-        sub_prompts = [tmpl.format(sub.lower()) for sub in sub_list]
-        inputs_sub = processor(text=sub_prompts, images=image, return_tensors="pt", padding=True).to(device)
+    sub_results = sorted(zip(sub_list, probs_sub), key=lambda x: x[1], reverse=True)
 
-        with torch.no_grad():
-            outputs_sub = model(**inputs_sub)
-            probs_sub = outputs_sub.logits_per_image.softmax(dim=1)[0].cpu().numpy()
-            ensemble_probs += probs_sub
-
-    final_sub_probs = (ensemble_probs / len(templates)) * 100
-    sub_results = sorted(zip(sub_list, final_sub_probs), key=lambda x: x[1], reverse=True)
-    top_sub_type = sub_results[0][0]
-
-    return top_main_class, top_main_conf, top_sub_type, main_names, main_probs
+    return detected_main.upper(), main_results[0][1], sub_results[0][0], [r[0] for r in main_results], [r[1] for r in main_results]
 
 # def predict_single_pass(image):
 #     """ Optimized lightweight single-pass engine for batch runs """
