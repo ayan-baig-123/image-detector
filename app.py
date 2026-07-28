@@ -37,7 +37,7 @@ SUB_CLASSES = {
 # 2. PAGE CONFIGURATION
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Prisom Vision",
+    page_title="Prism Vision",
     page_icon="💎",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -322,9 +322,6 @@ def predict_hierarchical(image):
     return top_main_class, top_main_conf, top_sub_type, main_names, main_probs
 
 
-# ---------------------------------------------------------
-# 7. UI LAYOUT & TABS
-# ---------------------------------------------------------
 st.markdown("<h1 class='hero-title'>💎 PRISM VISION</h1>", unsafe_allow_html=True)
 st.markdown("<p class='hero-subtitle'>Deep Visual Intelligence & High-Precision Category Detection</p>", unsafe_allow_html=True)
 
@@ -341,7 +338,7 @@ with tab1:
         
         if uploaded_file:
             image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption="Uploaded Image Preview", use_container_width=True)
+            st.image(image, caption="Uploaded Image Preview", width='stretch')
         st.markdown("</div>", unsafe_allow_html=True)
         
     with col2:
@@ -374,7 +371,7 @@ with tab1:
                         font=dict(color='#f8fafc', family="Arial"),
                         margin=dict(l=10, r=10, t=10, b=10), height=340
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
                 except Exception as e:
                     st.error(f"Execution Error: {str(e)}")
         else:
@@ -394,5 +391,5 @@ with tab2:
         labels=dict(x="Predicted Class", y="Actual Class", color="Count")
     )
     fig_cm.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#f8fafc'), height=480)
-    st.plotly_chart(fig_cm, use_container_width=True)
+    st.plotly_chart(fig_cm, width='stretch')
     st.markdown("</div>", unsafe_allow_html=True)
