@@ -5,3 +5,4 @@ pillow
 plotly
 pandas
 numpy
+torchvision
