@@ -21,7 +21,7 @@ DATASET_CLASSES = [
 ]
 
 SUB_CLASSES = {
-    "Horse": ["Arabian Horse", "Thoroughbred Horse", "Quarter Horse", "Appaloosa Horse", "Friesian Horse", "Clydesdale Horse", "Mustang Horse", "Pony", "Sorrel Horse", "Chestnut Horse", "Stallion"],
+    "Horse": ["Arabian Horse", "Thoroughbred Horse", "Quarter Horse", "Appaloosa Horse", "Friesian Horse", "Clydesdale Horse", "Mustang Horse", "Pony", "Sorrel Horse", "Chestnut Horse", "Stallion", "Gypsy Vanner"],
     "Dog": ["Labrador Retriever", "German Shepherd", "Golden Retriever", "Bulldog", "Beagle", "Poodle", "Rottweiler", "Saluki Hound", "Siberian Husky", "Pug", "Doberman Pinscher", "Boxer Dog"],
     "Cat": ["Persian Cat", "Siamese Cat", "Maine Coon Cat", "Bengal Cat", "Sphynx Cat", "British Shorthair Cat", "Ragdoll Cat", "Tabby Cat", "Scottish Fold Cat"],
     "Bird": ["Parrot", "Eagle", "Falcon", "Owl", "Peacock", "Flamingo", "Sparrow", "Pigeon", "Canary", "Macaw", "Kingfisher", "Toucan"],
